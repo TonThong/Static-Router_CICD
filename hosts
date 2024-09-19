@@ -1,0 +1,12 @@
+[R]
+R1 ansible_host=10.215.27.141
+R2 ansible_host=10.215.27.193
+
+[R:vars]
+ansible_become_password=vnpro#321
+ansible_user=vnpro
+ansible_password=vnpro#123
+ansible_connection=network_cli
+ansible_become="yes"
+ansible_become_method="enable"
+ansible_network_os=ios

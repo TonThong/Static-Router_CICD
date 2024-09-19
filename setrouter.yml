@@ -1,0 +1,42 @@
+---
+- name: Cấu hình IP cho các router
+  hosts: R
+  gather_facts: no
+  tasks:
+    - name: Bật interface
+      ios_interfaces:
+        config:
+          - name: "{{ item.name }}"
+            enabled: yes
+      loop: "{{ interfaces }}"
+
+    - name: Đặt địa chỉ IP cho interface
+      ios_l3_interfaces:
+        config:
+          - name: "{{ item.name }}"
+            ipv4:
+              - address: "{{ item.ip }}"
+        state: merged
+      loop: "{{ interfaces }}"
+
+    - name: Cấu hình static route
+      cisco.ios.ios_static_routes:
+        config:
+          - address_families:
+              - afi: ipv4
+                routes:
+                  - dest: "{{ item.prefix }}"
+                    next_hops:
+                      - forward_router_address: "{{ item.next_hop }}"
+      loop:
+        - { prefix: 192.168.2.0/24, next_hop: 192.168.12.2, host: R1 }
+        - { prefix: 192.168.1.0/24, next_hop: 192.168.12.1, host: R2 }
+      when: inventory_hostname == item.host
+
+    - name: Hiển thị thông tin route
+      ios_command:
+        commands:
+          - show ip route
+      register: show_route
+
+    - debug: var=show_route.stdout_lines
